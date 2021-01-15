@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\SensioLabs\Deptrac\AstRunner\Visitor;
+namespace Tests\SensioLabs\Deptrac\AstRunner;
 
 use PHPUnit\Framework\TestCase;
 use SensioLabs\Deptrac\AstRunner\AstMap;
@@ -14,16 +14,16 @@ use SensioLabs\Deptrac\AstRunner\AstRunner;
 use SensioLabs\Deptrac\AstRunner\Resolver\AnnotationDependencyResolver;
 use SensioLabs\Deptrac\AstRunner\Resolver\AnonymousClassResolver;
 use SensioLabs\Deptrac\AstRunner\Resolver\ClassConstantResolver;
+use SensioLabs\Deptrac\AstRunner\Resolver\ClassMethodResolver;
 use SensioLabs\Deptrac\AstRunner\Resolver\TypeResolver;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Tests\SensioLabs\Deptrac\AstRunner\ArrayAsserts;
-use Tests\SensioLabs\Deptrac\AstRunner\Visitor\Fixtures\BasicDependency\BasicDependencyClassB;
-use Tests\SensioLabs\Deptrac\AstRunner\Visitor\Fixtures\BasicDependency\BasicDependencyClassC;
-use Tests\SensioLabs\Deptrac\AstRunner\Visitor\Fixtures\BasicDependency\BasicDependencyTraitA;
-use Tests\SensioLabs\Deptrac\AstRunner\Visitor\Fixtures\BasicDependency\BasicDependencyTraitB;
-use Tests\SensioLabs\Deptrac\AstRunner\Visitor\Fixtures\BasicDependency\BasicDependencyTraitC;
-use Tests\SensioLabs\Deptrac\AstRunner\Visitor\Fixtures\BasicDependency\BasicDependencyTraitClass;
-use Tests\SensioLabs\Deptrac\AstRunner\Visitor\Fixtures\BasicDependency\BasicDependencyTraitD;
+use Tests\SensioLabs\Deptrac\AstRunner\Fixtures\BasicDependency\BasicDependencyClassB;
+use Tests\SensioLabs\Deptrac\AstRunner\Fixtures\BasicDependency\BasicDependencyClassC;
+use Tests\SensioLabs\Deptrac\AstRunner\Fixtures\BasicDependency\BasicDependencyTraitA;
+use Tests\SensioLabs\Deptrac\AstRunner\Fixtures\BasicDependency\BasicDependencyTraitB;
+use Tests\SensioLabs\Deptrac\AstRunner\Fixtures\BasicDependency\BasicDependencyTraitC;
+use Tests\SensioLabs\Deptrac\AstRunner\Fixtures\BasicDependency\BasicDependencyTraitClass;
+use Tests\SensioLabs\Deptrac\AstRunner\Fixtures\BasicDependency\BasicDependencyTraitD;
 
 final class AstMapGeneratorTest extends TestCase
 {
@@ -40,7 +40,8 @@ final class AstMapGeneratorTest extends TestCase
                 $typeResolver,
                 new AnnotationDependencyResolver($typeResolver),
                 new AnonymousClassResolver(),
-                new ClassConstantResolver()
+                new ClassConstantResolver(),
+                new ClassMethodResolver($typeResolver)
             )
         );
 
@@ -116,6 +117,24 @@ final class AstMapGeneratorTest extends TestCase
                     return $dependency->getClassLikeName()->toString();
                 },
                 $astMap->getAstFileReferences()[__DIR__.'/Fixtures/Issue319.php']->getDependencies()
+            )
+        );
+    }
+
+    public function testMethodCall(): void
+    {
+        $astMap = $this->getAstMap(__DIR__.'/Fixtures/MethodCall.php');
+
+        self::assertSame(
+            [
+                'Tests\SensioLabs\Deptrac\AstRunner\Fixtures\DummyClassA',
+                'Tests\SensioLabs\Deptrac\AstRunner\Fixtures\DummyViolationClass',
+            ],
+            array_map(
+                static function (AstMap\AstDependency $dependency) {
+                    return $dependency->getClassLikeName()->toString();
+                },
+                $astMap->getAstClassReferences()['Tests\SensioLabs\Deptrac\AstRunner\Fixtures\DummyClassC']->getDependencies()
             )
         );
     }
