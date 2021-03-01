@@ -1,0 +1,14 @@
+paths: ["./ImportNamespace"]
+exclude_files: []
+layers:
+  - name: Models
+    collectors:
+      - type: className
+        regex: ImportNamespace\\Models\\.*
+  - name: Controllers
+    collectors:
+      - type: className
+        regex: ImportNamespace\\Controllers\\.*
+ruleset: 
+  Controllers:
+    - Models
